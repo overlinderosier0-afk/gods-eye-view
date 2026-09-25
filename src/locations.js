@@ -514,6 +514,116 @@ export const CITY_POIS = {
       },
     ],
   },
+  'cap-haitien': {
+    name: 'Cap-Haïtien',
+    groundElevation: 40,
+    viewBounds: {
+      southwest: { lat: 19.55, lng: -72.35 },
+      northeast: { lat: 19.85, lng: -72.1 },
+    },
+    pois: [
+      {
+        name: 'Citadelle Laferrière',
+        lat: 19.5736,
+        lon: -72.2428,
+        alt: 1500,
+        pitch: -32,
+        heading: 20,
+        buildingHeight: 40,
+      },
+      {
+        name: 'Palais Sans-Souci',
+        lat: 19.6047,
+        lon: -72.218,
+        alt: 700,
+        pitch: -28,
+        heading: 180,
+        buildingHeight: 15,
+      },
+      {
+        name: 'Cathédrale Notre-Dame du Cap-Haïtien',
+        lat: 19.76134,
+        lon: -72.19993,
+        alt: 500,
+        pitch: -25,
+        heading: 90,
+        buildingHeight: 25,
+      },
+      {
+        name: 'Aéroport international du Cap-Haïtien',
+        lat: 19.73723,
+        lon: -72.19433,
+        alt: 900,
+        pitch: -30,
+        heading: 0,
+        buildingHeight: 10,
+      },
+      {
+        name: 'Labadee',
+        lat: 19.7857,
+        lon: -72.245,
+        alt: 1000,
+        pitch: -28,
+        heading: 180,
+        buildingHeight: 10,
+      },
+    ],
+  },
+  'port-au-prince': {
+    name: 'Port-au-Prince',
+    groundElevation: 50,
+    viewBounds: {
+      southwest: { lat: 18.45, lng: -72.45 },
+      northeast: { lat: 18.65, lng: -72.25 },
+    },
+    pois: [
+      {
+        name: "Palais national d'Haïti",
+        lat: 18.5433,
+        lon: -72.3389,
+        alt: 650,
+        pitch: -28,
+        heading: 90,
+        buildingHeight: 20,
+      },
+      {
+        name: 'Champ de Mars',
+        lat: 18.5438,
+        lon: -72.34438,
+        alt: 750,
+        pitch: -30,
+        heading: 270,
+        buildingHeight: 10,
+      },
+      {
+        name: 'Cathédrale Notre-Dame de Port-au-Prince',
+        lat: 18.5475,
+        lon: -72.339,
+        alt: 550,
+        pitch: -25,
+        heading: 180,
+        buildingHeight: 25,
+      },
+      {
+        name: 'Aéroport international Toussaint Louverture',
+        lat: 18.58,
+        lon: -72.2925,
+        alt: 1000,
+        pitch: -30,
+        heading: 0,
+        buildingHeight: 10,
+      },
+      {
+        name: 'Pétion-Ville',
+        lat: 18.5125,
+        lon: -72.2858,
+        alt: 800,
+        pitch: -28,
+        heading: 90,
+        buildingHeight: 15,
+      },
+    ],
+  },
 };
 
 /**
@@ -1221,7 +1331,7 @@ function shouldFrameGeocodeViewport(mode) {
   );
 }
 
-function flyToViewportBounds(viewer, viewport, options = {}) {
+export function flyToViewportBounds(viewer, viewport, options = {}) {
   const {
     duration = 3.0,
     beforeFly = null,

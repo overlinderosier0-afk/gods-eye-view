@@ -1,4 +1,5 @@
 import { createSurfaceKeyboard } from './ui/surfaceKeyboard.js';
+import { flyToViewportBounds } from './locations.js';
 
 // First-run mission launcher.
 //
@@ -116,6 +117,23 @@ export const FIRST_RUN_MISSIONS = Object.freeze({
     // are judged on the layer row, which tells them the truth.
     layerIds: Object.freeze(['earthquakes', 'local-firms']),
     busyText: 'Scanning active events…',
+  }),
+  haiti: Object.freeze({
+    kind: 'globe',
+    // Haiti's two live stories: seismic risk (USGS earthquakes) and hurricane
+    // season (NHC/CPHC cyclone tracks). Both feeds are keyless, so the tile
+    // delivers in full without any configuration — the same honesty contract
+    // as the environmental tile: what the tile promises, the visitor gets.
+    layerIds: Object.freeze(['earthquakes', 'weather-cyclones']),
+    // The one globe mission that frames a country instead of the planet: the
+    // camera flies to a Haiti overview rather than the generic pull-out.
+    // Honored by the flyToGlobe dep wired in initFirstRunExperience below —
+    // runFirstRunChoice itself stays untouched.
+    viewBounds: Object.freeze({
+      southwest: Object.freeze({ lat: 17.8, lng: -74.7 }),
+      northeast: Object.freeze({ lat: 20.2, lng: -71.5 }),
+    }),
+    busyText: 'Flying to Haiti…',
   }),
   explore: Object.freeze({ kind: 'none' }),
 });
@@ -471,7 +489,17 @@ export function initFirstRunExperience({
         // these layers, so it persists exactly as clicking those rows would.
         setLayerEnabled: (layerId) =>
           dataManager.setEnabled(layerId, true, { origin: 'user' }),
-        flyToGlobe: () => styleManager.resetToGlobeView(),
+        // Most globe missions pull out to the full planet. A mission carrying
+        // viewBounds (Haiti) frames its own country instead. The flight is
+        // framing, not the mission — runFirstRunChoice already treats a
+        // stalled or superseded flight as a non-failure.
+        flyToGlobe: () => {
+          const mission = FIRST_RUN_MISSIONS[choice];
+          if (mission?.viewBounds && styleManager.viewer) {
+            return flyToViewportBounds(styleManager.viewer, mission.viewBounds);
+          }
+          return styleManager.resetToGlobeView();
+        },
       });
     } catch (error) {
       // A thrown mission is a real defect worth seeing in a bug report; the

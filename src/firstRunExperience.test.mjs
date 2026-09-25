@@ -401,14 +401,14 @@ function missionSpy({ contextOk = true, layerResult = () => true, globe = async 
   };
 }
 
-test('the menu is the four owner-ordered missions', () => {
+test('the menu is the five owner-ordered missions', () => {
   // INFRASTRUCTURE was removed after the owner playtested it: enabling all
   // three bundled layers at once put ~5,700 entities on a full-earth view and
   // tanked the frame rate. The layers stay reachable by hand and by voice; what
   // went is the one-click globe-scale dump. Restoring the tile needs the
   // globe-LOD declutter first.
   assert.deepEqual(Object.keys(FIRST_RUN_MISSIONS), [
-    'contacts', 'space-missions', 'environmental', 'explore',
+    'contacts', 'space-missions', 'environmental', 'haiti', 'explore',
   ]);
   assert.equal(FIRST_RUN_MISSIONS.infrastructure, undefined,
     'the infrastructure mission must be gone, not dormant');
@@ -495,6 +495,30 @@ test('a failed Context mission reports the layers the facade named', async () =>
   assert.deepEqual(outcome.result.failedLayerIds, ['rocket-launches']);
 });
 
+test('Haiti enables quakes and cyclone tracks and frames the country', async () => {
+  // The Haiti tile is Haiti's two live stories — seismic risk (USGS) and
+  // hurricane season (NHC/CPHC) — and unlike the other globe mission it flies
+  // to a country overview instead of the generic globe pull-out.
+  const haiti = FIRST_RUN_MISSIONS.haiti;
+  assert.equal(haiti.kind, 'globe');
+  assert.deepEqual(haiti.layerIds, ['earthquakes', 'weather-cyclones']);
+
+  const { southwest, northeast } = haiti.viewBounds;
+  for (const corner of [southwest, northeast]) {
+    assert.ok(Number.isFinite(corner.lat) && Number.isFinite(corner.lng));
+  }
+  assert.ok(southwest.lat < northeast.lat && southwest.lng < northeast.lng);
+  // Haiti spans roughly 17.6–20.1°N, 74.5–71.7°W; the frame keeps a margin.
+  assert.ok(southwest.lat <= 17.9 && northeast.lat >= 20.1);
+  assert.ok(southwest.lng <= -74.5 && northeast.lng >= -71.7);
+
+  const spy = missionSpy();
+  const outcome = await runFirstRunChoice('haiti', spy.deps);
+  assert.equal(outcome.ok, true);
+  assert.deepEqual(spy.calls.layerIds, ['earthquakes', 'weather-cyclones']);
+  assert.equal(spy.calls.globeFlights, 1);
+});
+
 test('the fires/quakes tile name is switchable from one constant', () => {
   assert.equal(environmentalLabel('ENVIRONMENTAL').title, 'ENVIRONMENTAL');
   assert.equal(environmentalLabel('EARTH_WATCH').title, 'EARTH WATCH');
@@ -556,7 +580,7 @@ test('markup, startup ordering and accessibility remain pinned', () => {
   const css = readStylesheet(new URL('../style.css', import.meta.url));
 
   assert.match(html, /id="first-run-launcher" role="dialog"[^>]*aria-labelledby="first-run-title"[^>]*hidden/);
-  assert.equal((html.match(/data-first-run-choice=/g) || []).length, 4);
+  assert.equal((html.match(/data-first-run-choice=/g) || []).length, 5);
   assert.match(html, /data-first-run-status[^>]*role="status"[^>]*aria-live="polite"/);
   assert.match(html, /<input type="checkbox" data-first-run-suppress \/>/);
   assert.match(html, /<strong data-first-run-environmental-title>/);
@@ -567,6 +591,11 @@ test('markup, startup ordering and accessibility remain pinned', () => {
   const visible = envTile.slice(envTile.indexOf('<small>'), envTile.indexOf('</small>'));
   assert.match(visible, /earthquakes/i);
   assert.match(visible, /fires?/i, 'the tile must promise the fires it enables');
+  // Same contract for the Haiti tile: its subcopy must name both feeds.
+  const haitiTile = html.slice(html.indexOf('data-first-run-choice="haiti"'));
+  const haitiVisible = haitiTile.slice(haitiTile.indexOf('<small>'), haitiTile.indexOf('</small>'));
+  assert.match(haitiVisible, /earthquakes/i);
+  assert.match(haitiVisible, /cyclone/i, 'the tile must promise the cyclone tracks it enables');
 
   // The card's one persuasive line is OWNER-AUTHORED and pinned verbatim,
   // unspaced em dash included. This is copy, not prose to be improved in a
@@ -579,7 +608,7 @@ test('markup, startup ordering and accessibility remain pinned', () => {
 
   // Menu order is the owner's, read straight off the markup.
   const order = [...html.matchAll(/data-first-run-choice="([a-z-]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(order, ['contacts', 'space-missions', 'environmental', 'explore']);
+  assert.deepEqual(order, ['contacts', 'space-missions', 'environmental', 'haiti', 'explore']);
   assert.doesNotMatch(html, /data-first-run-choice="infrastructure"/,
     'the removed tile must leave no markup behind');
 
@@ -667,12 +696,13 @@ test('the voice TOOL SCHEMA matches the pinned release — the mission mapping i
   // Cyber deliberately adds one layout; first-run missions still change no tools.
   hudLayout.enum = hudLayout.enum.filter((layout) => layout !== 'cyber');
   const block = JSON.stringify(legacyTools);
-  // Re-derived for the additive `local-adsb` set_layer_visibility value and
-  // its common-name mapping; the missions still ride existing tools.
-  assert.equal(block.length, 27432, 'serialized tool schema length drifted');
+  // Re-derived for the additive `local-adsb` and `weather-cyclones`
+  // set_layer_visibility values and their common-name mappings; the missions
+  // still ride existing tools.
+  assert.equal(block.length, 27451, 'serialized tool schema length drifted');
   assert.equal(
     crypto.createHash('sha256').update(block).digest('hex'),
-    'a2a4a787f4528f75b01f3f42caec636f29c37452c0d45b11f4f986171d6be57d',
+    '67c3438ba6b23f23b668771c160fc35f61d9a8d40a43a87c7b321e022d79b0d3',
     'the first-run missions must ride EXISTING tools: no schema edit, no cache bust',
   );
   const instructions = fs.readFileSync(new URL('../server/providers/openai/instructions.js', import.meta.url), 'utf8');

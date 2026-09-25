@@ -140,6 +140,7 @@ const schemas = [
             'telegeography-submarine-cables',
             'local-firms',
             'fire-perimeters',
+            'weather-cyclones',
             'alpr-cameras',
             'local-adsb',
           ],
